@@ -1,11 +1,26 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HackathonCard from "./HackathonCard";
-import { hackathons } from "@/data/hackathons";
+import { Hackathon } from "@/data/hackathons";
 
 const FeaturedHackathons = () => {
-  const featured = hackathons.slice(0, 4);
+  const [featured, setFeatured] = useState<Hackathon[]>([]);
+
+  useEffect(() => {
+    const fetchHackathons = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/hackathons');
+        const data = await response.json();
+        setFeatured(data.slice(0, 4));
+      } catch (error) {
+        console.error('Error fetching hackathons:', error);
+      }
+    };
+
+    fetchHackathons();
+  }, []);
 
   return (
     <section className="py-16">
@@ -34,8 +49,12 @@ const FeaturedHackathons = () => {
 
         {/* Hackathon Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featured.map((hackathon, index) => (
-            <HackathonCard key={hackathon.id} hackathon={hackathon} index={index} />
+          {featured.map((hackathon: any, index) => (
+            <HackathonCard 
+              key={hackathon._id || hackathon.id || index} 
+              hackathon={hackathon} 
+              index={index} 
+            />
           ))}
         </div>
       </div>

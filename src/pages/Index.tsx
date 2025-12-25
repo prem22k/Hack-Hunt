@@ -8,7 +8,7 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>Hackathon Finder - Discover & Join Amazing Hackathons</title>
+        <title>HackHunt - Discover & Join Amazing Hackathons</title>
         <meta
           name="description"
           content="Find your next hackathon adventure. A student-focused platform to discover hackathons worldwide, get email alerts, and never miss an opportunity to build and innovate."
@@ -27,7 +27,7 @@ const Index = () => {
         <footer className="py-8 border-t border-border">
           <div className="container mx-auto px-4 text-center">
             <p className="text-muted-foreground text-sm">
-              © 2025 HackathonFinder. Made with ❤️ for students.
+              © 2025 HackHunt
             </p>
           </div>
         </footer>

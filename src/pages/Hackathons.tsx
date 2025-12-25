@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Filter, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -6,14 +6,32 @@ import SearchBar from "@/components/SearchBar";
 import FilterPills from "@/components/FilterPills";
 import HackathonCard from "@/components/HackathonCard";
 import { Button } from "@/components/ui/button";
-import { hackathons, skills } from "@/data/hackathons";
+import { Hackathon, skills } from "@/data/hackathons";
 
 const Hackathons = () => {
+  const [hackathons, setHackathons] = useState<Hackathon[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedMode, setSelectedMode] = useState<string[]>([]);
   const [selectedType, setSelectedType] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    const fetchHackathons = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/hackathons');
+        const data = await response.json();
+        setHackathons(data);
+      } catch (error) {
+        console.error('Error fetching hackathons:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHackathons();
+  }, []);
 
   const modes = ["online", "offline", "hybrid"];
   const types = ["free", "paid"];
@@ -58,7 +76,7 @@ const Hackathons = () => {
   return (
     <>
       <Helmet>
-        <title>Browse Hackathons | Hackathon Finder</title>
+        <title>Browse Hackathons | HackHunt</title>
         <meta
           name="description"
           content="Discover and filter hackathons by skills, mode, and type. Find the perfect hackathon for your interests and skill level."

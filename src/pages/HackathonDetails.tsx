@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   ArrowLeft,
@@ -14,12 +15,50 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
-import { hackathons } from "@/data/hackathons";
+import { Hackathon } from "@/data/hackathons";
 import { cn } from "@/lib/utils";
 
 const HackathonDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const hackathon = hackathons.find((h) => h.id === id);
+  const [hackathon, setHackathon] = useState<Hackathon | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHackathon = async () => {
+      try {
+        // Try to fetch by ID (which might be the MongoDB _id or the custom id)
+        // Since we seeded with custom IDs, but MongoDB generates _id, we might need to handle both.
+        // However, the seed script didn't preserve the "id" field explicitly as _id.
+        // The seed script used `Hackathon.insertMany(hackathons)`.
+        // The `hackathons` array in seed.js didn't have `id` field (I removed it in my thought process but let's check seed.js content I wrote).
+        // Wait, I copied the array WITHOUT `id` field in `seed.js`?
+        // Let's check `seed.js` content again.
+        const response = await fetch(`http://localhost:5000/api/hackathons/${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setHackathon(data);
+        }
+      } catch (error) {
+        console.error('Error fetching hackathon:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchHackathon();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!hackathon) {
     return (
@@ -39,7 +78,7 @@ const HackathonDetails = () => {
   return (
     <>
       <Helmet>
-        <title>{hackathon.name} | Hackathon Finder</title>
+        <title>{hackathon.name} | HackHunt</title>
         <meta name="description" content={hackathon.description} />
       </Helmet>
 

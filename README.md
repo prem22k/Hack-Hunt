@@ -1,73 +1,120 @@
-# Welcome to your Lovable project
+🚀 HackRadar
 
-## Project info
+A smart way for students to discover hackathons
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+📌 Overview
 
-## How can I edit this code?
+HackRadar is a student-focused web platform that helps users discover upcoming hackathons from across the web in one place. Instead of manually searching multiple sites, students can browse, filter, and stay updated with hackathons that match their skills, interests, and preferences.
 
-There are several ways of editing your application.
+The goal of HackRadar is to save time, reduce information overload, and ensure students never miss opportunities to learn, build, and compete.
 
-**Use Lovable**
+🎯 Key Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+🔍 Discover hackathons from multiple sources
 
-Changes made via Lovable will be committed automatically to this repo.
+🏷️ Filter by:
 
-**Use your preferred IDE**
+Skills (Web Development, AI/ML, UI/UX, etc.)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Domain / Course
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Free or Paid
 
-Follow these steps:
+Online or Offline
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+📅 View detailed hackathon information
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+📧 Subscribe for email alerts based on preferences (UI ready)
 
-# Step 3: Install the necessary dependencies.
-npm i
+📱 Fully responsive design for mobile and desktop
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+🧑‍🎓 Target Audience
+
+College students
+
+Beginner & intermediate developers
+
+Hackathon enthusiasts
+
+Tech communities and clubs
+
+🛠️ Tech Stack
+
+Frontend: React + TypeScript
+
+Build Tool: Vite
+
+Styling: Tailwind CSS
+
+UI Components: shadcn/ui
+
+State Management: React Hooks
+
+Data: Mock / Dummy JSON (frontend-only)
+
+📂 Project Structure
+src/
+├── components/     # Reusable UI components
+├── pages/          # Page-level components
+├── data/           # Dummy hackathon data
+├── styles/         # Global styles
+├── App.tsx         # Root component
+└── main.tsx        # Entry point
+
+🚀 Getting Started
+Prerequisites
+
+Node.js (v18 or later)
+
+npm
+
+Installation
+git clone <your-repo-url>
+cd hackradar
+npm install
+
+Run Locally
 npm run dev
-```
 
-**Edit a file directly in GitHub**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The app will be available at:
 
-**Use GitHub Codespaces**
+http://localhost:5173
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+🌱 Future Enhancements
 
-## What technologies are used for this project?
+🔄 Auto-fetch hackathons from multiple platforms
 
-This project is built with:
+📨 Email notifications & reminders
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+🔐 User authentication
 
-## How can I deploy this project?
+⭐ Save / bookmark hackathons
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+📊 Personalized recommendations
 
-## Can I connect a custom domain to my Lovable project?
+💡 Project Motivation
 
-Yes, you can!
+As a student, finding relevant hackathons requires searching across multiple websites and platforms, which is time-consuming and inefficient. HackRadar was created to centralize hackathon discovery and make the process simple, fast, and personalized.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+🤝 Contributing
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Contributions are welcome!
+If you’d like to improve this project:
+
+Fork the repository
+
+Create a new branch
+
+Make your changes
+
+Submit a pull request
+
+📄 License
+
+This project is licensed under the MIT License.
+
+📬 Contact
+
+Created with ❤️ by a student, for students.
+Feel free to reach out for collaboration or feedback.
