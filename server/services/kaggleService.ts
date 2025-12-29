@@ -49,9 +49,9 @@ export const fetchKaggleCompetitions = async (): Promise<NormalizedHackathon[]> 
 
   try {
     const response = await axios.get(KAGGLE_API_URL, {
-      auth: {
-        username,
-        password: key
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${key}`
       },
       params: {
         category: 'featured', // or 'all'
