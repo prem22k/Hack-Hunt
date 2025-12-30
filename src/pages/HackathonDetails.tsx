@@ -20,26 +20,24 @@ import { cn } from "@/lib/utils";
 
 const HackathonDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const [hackathon, setHackathon] = useState<Hackathon | null>(null);
+  const [hackathon, setHackathon] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHackathon = async () => {
       try {
-        // Try to fetch by ID (which might be the MongoDB _id or the custom id)
-        // Since we seeded with custom IDs, but MongoDB generates _id, we might need to handle both.
-        // However, the seed script didn't preserve the "id" field explicitly as _id.
-        // The seed script used `Hackathon.insertMany(hackathons)`.
-        // The `hackathons` array in seed.js didn't have `id` field (I removed it in my thought process but let's check seed.js content I wrote).
-        // Wait, I copied the array WITHOUT `id` field in `seed.js`?
-        // Let's check `seed.js` content again.
-        const response = await fetch(`http://localhost:5000/api/hackathons/${id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setHackathon(data);
+        setError(null);
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const response = await fetch(`${API_URL}/api/hackathons/${id}`);
+        if (!response.ok) {
+           throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+        setHackathon(data);
       } catch (error) {
         console.error('Error fetching hackathon:', error);
+        setError("Failed to load hackathon details.");
       } finally {
         setLoading(false);
       }
@@ -60,6 +58,22 @@ const HackathonDetails = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-destructive mb-4">
+            Error Loading Hackathon
+          </h1>
+          <p className="text-muted-foreground mb-6">{error}</p>
+          <Link to="/hackathons">
+            <Button variant="outline">Back to List</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (!hackathon) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -75,11 +89,51 @@ const HackathonDetails = () => {
     );
   }
 
+  // Normalize Data
+  const name = hackathon.name || hackathon.title || "Untitled Event";
+  const description = hackathon.longDescription || hackathon.description || "No description available.";
+  const organizer = hackathon.organizer || "Unknown Organizer";
+  const location = hackathon.location || "Online";
+  const mode = hackathon.mode || "online";
+  const type = hackathon.type || (hackathon.isPaid ? "paid" : "free");
+  const prize = hackathon.prize || "TBD";
+  const participants = hackathon.participants || 0;
+  const skills = hackathon.skills || [];
+  const imageUrl = hackathon.imageUrl || hackathon.image;
+  const registrationUrl = hackathon.registrationUrl || "#";
+  const eligibility = hackathon.eligibility || ["Open to all students", "Must be 18+"];
+
+  // Date Handling
+  let dateDisplay = { month: "TBD", day: 0, start: "TBD" };
+  let deadlineDisplay = "TBD";
+
+  if (hackathon.startDate) {
+      const start = new Date(hackathon.startDate);
+      dateDisplay = {
+          month: start.toLocaleString('default', { month: 'short' }).toUpperCase(),
+          day: start.getDate(),
+          start: start.toLocaleDateString()
+      };
+  } else if (hackathon.date) {
+      dateDisplay = {
+          month: hackathon.date.month || "TBD",
+          day: hackathon.date.day || 0,
+          start: hackathon.date.start || "TBD"
+      };
+  }
+
+  if (hackathon.endDate) {
+      deadlineDisplay = new Date(hackathon.endDate).toLocaleDateString();
+  } else if (hackathon.deadline) {
+      deadlineDisplay = hackathon.deadline;
+  }
+
+
   return (
     <>
       <Helmet>
-        <title>{hackathon.name} | HackHunt</title>
-        <meta name="description" content={hackathon.description} />
+        <title>{name} | HackHunt</title>
+        <meta name="description" content={description.substring(0, 150)} />
       </Helmet>
 
       <div className="min-h-screen bg-background pb-20 md:pb-0">
@@ -101,8 +155,20 @@ const HackathonDetails = () => {
               {/* Header Card */}
               <div className="bg-card rounded-2xl overflow-hidden shadow-sm animate-fade-in">
                 {/* Banner */}
-                <div className="h-48 md:h-64 bg-gradient-to-br from-secondary to-pink-muted flex items-center justify-center relative">
-                  <div className="w-24 h-24 rounded-3xl gradient-coral flex items-center justify-center shadow-glow">
+                <div className="h-48 md:h-64 bg-gradient-to-br from-secondary to-pink-muted flex items-center justify-center relative overflow-hidden">
+                  {imageUrl ? (
+                    <img 
+                      src={imageUrl} 
+                      alt={name} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  
+                  <div className={cn("w-24 h-24 rounded-3xl gradient-coral flex items-center justify-center shadow-glow", imageUrl ? "hidden" : "")}>
                     <Trophy className="w-12 h-12 text-primary-foreground" />
                   </div>
 
@@ -111,23 +177,23 @@ const HackathonDetails = () => {
                     <Badge
                       className={cn(
                         "text-sm font-medium",
-                        hackathon.mode === "online" && "bg-success/20 text-success",
-                        hackathon.mode === "offline" && "bg-info/20 text-info",
-                        hackathon.mode === "hybrid" && "bg-warning/20 text-warning"
+                        mode === "online" && "bg-success/20 text-success",
+                        mode === "offline" && "bg-info/20 text-info",
+                        mode === "hybrid" && "bg-warning/20 text-warning"
                       )}
                     >
-                      {hackathon.mode.charAt(0).toUpperCase() + hackathon.mode.slice(1)}
+                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
                     </Badge>
                     <Badge
                       variant="outline"
                       className={cn(
                         "text-sm",
-                        hackathon.type === "free"
+                        type === "free"
                           ? "border-success text-success"
                           : "border-primary text-primary"
                       )}
                     >
-                      {hackathon.type.charAt(0).toUpperCase() + hackathon.type.slice(1)}
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
                     </Badge>
                   </div>
                 </div>
@@ -135,12 +201,12 @@ const HackathonDetails = () => {
                 {/* Content */}
                 <div className="p-6 md:p-8">
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                    {hackathon.name}
+                    {name}
                   </h1>
                   <p className="text-muted-foreground mb-4">
                     Organized by{" "}
                     <span className="text-foreground font-medium">
-                      {hackathon.organizer}
+                      {organizer}
                     </span>
                   </p>
 
@@ -148,27 +214,27 @@ const HackathonDetails = () => {
                   <div className="flex flex-wrap gap-4 mb-6">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <MapPin className="w-4 h-4 text-primary" />
-                      <span>{hackathon.location}</span>
+                      <span>{location}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="w-4 h-4 text-primary" />
                       <span>
-                        {hackathon.date.month} {hackathon.date.day}
+                        {dateDisplay.month} {dateDisplay.day}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Users className="w-4 h-4 text-primary" />
-                      <span>{hackathon.participants}+ participants</span>
+                      <span>{participants > 0 ? `${participants}+` : "Open"} participants</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Trophy className="w-4 h-4 text-warning" />
-                      <span>{hackathon.prize} in prizes</span>
+                      <span>{prize} in prizes</span>
                     </div>
                   </div>
 
                   {/* Skills */}
                   <div className="flex flex-wrap gap-2">
-                    {hackathon.skills.map((skill) => (
+                    {skills.map((skill: string) => (
                       <Badge key={skill} variant="secondary">
                         {skill}
                       </Badge>
@@ -182,8 +248,8 @@ const HackathonDetails = () => {
                 <h2 className="text-xl font-semibold text-foreground mb-4">
                   About This Hackathon
                 </h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  {hackathon.longDescription}
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {description}
                 </p>
               </div>
 
@@ -193,7 +259,7 @@ const HackathonDetails = () => {
                   Eligibility
                 </h2>
                 <ul className="space-y-3">
-                  {hackathon.eligibility.map((item, index) => (
+                  {eligibility.map((item: string, index: number) => (
                     <li key={index} className="flex items-center gap-3">
                       <CheckCircle className="w-5 h-5 text-success flex-shrink-0" />
                       <span className="text-muted-foreground">{item}</span>
@@ -209,7 +275,7 @@ const HackathonDetails = () => {
               <div className="bg-card rounded-2xl p-6 shadow-sm sticky top-24">
                 <div className="text-center mb-6">
                   <div className="text-3xl font-bold text-foreground mb-1">
-                    {hackathon.prize}
+                    {prize}
                   </div>
                   <p className="text-muted-foreground text-sm">in prizes</p>
                 </div>
@@ -218,25 +284,25 @@ const HackathonDetails = () => {
                   <div className="flex items-center justify-between py-3 border-b border-border">
                     <span className="text-muted-foreground">Registration</span>
                     <span className="font-medium text-foreground">
-                      {hackathon.type === "free" ? "Free" : "Paid Entry"}
+                      {type === "free" ? "Free" : "Paid Entry"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-border">
                     <span className="text-muted-foreground">Deadline</span>
                     <span className="font-medium text-foreground">
-                      {hackathon.deadline}
+                      {deadlineDisplay}
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-3">
                     <span className="text-muted-foreground">Participants</span>
                     <span className="font-medium text-foreground">
-                      {hackathon.participants}+
+                      {participants > 0 ? `${participants}+` : "Open"}
                     </span>
                   </div>
                 </div>
 
                 <a
-                  href={hackathon.registrationUrl}
+                  href={registrationUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -261,16 +327,16 @@ const HackathonDetails = () => {
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 rounded-xl bg-secondary flex flex-col items-center justify-center flex-shrink-0">
                       <span className="text-xs font-semibold text-primary uppercase">
-                        {hackathon.date.month}
+                        {dateDisplay.month}
                       </span>
                       <span className="text-lg font-bold text-foreground">
-                        {hackathon.date.day}
+                        {dateDisplay.day}
                       </span>
                     </div>
                     <div>
                       <p className="font-medium text-foreground">Event Start</p>
                       <p className="text-sm text-muted-foreground">
-                        {hackathon.date.start}
+                        {dateDisplay.start}
                       </p>
                     </div>
                   </div>
@@ -281,7 +347,7 @@ const HackathonDetails = () => {
                     <div>
                       <p className="font-medium text-foreground">Registration Deadline</p>
                       <p className="text-sm text-muted-foreground">
-                        {hackathon.deadline}
+                        {deadlineDisplay}
                       </p>
                     </div>
                   </div>

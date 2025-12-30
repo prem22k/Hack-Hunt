@@ -9,6 +9,7 @@ import Hackathons from "./pages/Hackathons";
 import HackathonDetails from "./pages/HackathonDetails";
 import Alerts from "./pages/Alerts";
 import NotFound from "./pages/NotFound";
+import Login from "./components/Login";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/hackathons" element={<Hackathons />} />
             <Route path="/hackathon/:id" element={<HackathonDetails />} />
             <Route path="/alerts" element={<Alerts />} />

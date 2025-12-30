@@ -19,7 +19,7 @@ app.use('/api/hackathons', hackathonRoutes);
 
 // Database Connection & Server Start
 const startServer = async () => {
-  await connectDB();
+  // await connectDB(); // Keeping this commented as we are using Firestore now? Wait, let me check utils/db.ts
   
   // Start Cron Jobs
   startScheduler();

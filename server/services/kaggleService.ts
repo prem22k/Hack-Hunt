@@ -49,9 +49,9 @@ export const fetchKaggleCompetitions = async (): Promise<NormalizedHackathon[]> 
 
   try {
     const response = await axios.get(KAGGLE_API_URL, {
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${key}`
+      auth: {
+        username: username,
+        password: key
       },
       params: {
         category: 'featured', // or 'all'
@@ -75,7 +75,8 @@ export const fetchKaggleCompetitions = async (): Promise<NormalizedHackathon[]> 
         registrationUrl: `https://www.kaggle.com/c/${comp.ref}`,
         source: 'kaggle',
         location: 'Virtual',
-        prize: comp.reward || ''
+        prize: comp.reward || '',
+        imageUrl: comp.thumbnailImageUrl || ''
       };
     });
   } catch (error) {

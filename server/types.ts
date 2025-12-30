@@ -11,4 +11,5 @@ export interface NormalizedHackathon {
   source: 'mlh' | 'kaggle' | 'devpost';
   location?: string;
   prize?: string;
+  imageUrl?: string;
 }

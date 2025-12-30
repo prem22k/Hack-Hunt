@@ -22,6 +22,7 @@ const HackathonCard = ({ hackathon, index = 0 }: HackathonCardProps) => {
   const participants = hackathon.participants || 0;
   const skills = hackathon.skills || [];
   const id = hackathon._id || hackathon.id;
+  const imageUrl = hackathon.imageUrl || hackathon.image;
 
   // Date handling
   let month = "TBD";
@@ -43,7 +44,20 @@ const HackathonCard = ({ hackathon, index = 0 }: HackathonCardProps) => {
     >
       {/* Image/Banner */}
       <div className="relative h-40 bg-gradient-to-br from-secondary to-pink-muted overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
+        {imageUrl ? (
+          <img 
+            src={imageUrl} 
+            alt={name} 
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+              // Show fallback
+              const fallback = (e.target as HTMLImageElement).nextElementSibling;
+              if (fallback) fallback.classList.remove('hidden');
+            }}
+          />
+        ) : null}
+        <div className={cn("absolute inset-0 flex items-center justify-center", imageUrl ? "hidden" : "")}>
           <div className="w-20 h-20 rounded-2xl gradient-coral flex items-center justify-center transform group-hover:scale-110 transition-transform duration-500">
             <Trophy className="w-10 h-10 text-primary-foreground" />
           </div>

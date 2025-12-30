@@ -5,7 +5,11 @@ const MLH_URL = 'https://mlh.io/seasons/2025/events';
 
 export const fetchMLHHackathons = async (): Promise<NormalizedHackathon[]> => {
   console.log('Launching browser for MLH...');
-  const browser = await chromium.launch({ headless: true });
+  // Try to launch without sandbox if dependencies are missing
+  const browser = await chromium.launch({ 
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
   const context = await browser.newContext({
     userAgent:
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
@@ -39,7 +43,17 @@ export const fetchMLHHackathons = async (): Promise<NormalizedHackathon[]> => {
           const dateStr = dateElement?.textContent?.trim() || '';
           const location = locationElement?.textContent?.trim() || 'Online';
           const url = (linkElement as HTMLAnchorElement).href;
-          const imageUrl = (imageElement as HTMLImageElement)?.src || '';
+          let imageUrl = (imageElement as HTMLImageElement)?.src || '';
+          
+          // Ensure absolute URL
+          if (imageUrl && !imageUrl.startsWith('http')) {
+              if (imageUrl.startsWith('//')) {
+                  imageUrl = 'https:' + imageUrl;
+              } else {
+                  // If relative to domain, we might need base url, but usually they are absolute or protocol relative
+                  // For now, leave as is if not protocol relative
+              }
+          }
 
           let mode: 'online' | 'offline' | 'hybrid' = 'offline';
           if (location.toLowerCase().includes('virtual') || location.toLowerCase().includes('online')) {

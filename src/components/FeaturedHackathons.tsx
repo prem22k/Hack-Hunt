@@ -7,15 +7,21 @@ import { Hackathon } from "@/data/hackathons";
 
 const FeaturedHackathons = () => {
   const [featured, setFeatured] = useState<Hackathon[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHackathons = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/hackathons');
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const response = await fetch(`${API_URL}/api/hackathons`);
+        if (!response.ok) {
+           throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
         setFeatured(data.slice(0, 4));
       } catch (error) {
         console.error('Error fetching hackathons:', error);
+        setError("Failed to load featured hackathons.");
       }
     };
 
@@ -48,15 +54,21 @@ const FeaturedHackathons = () => {
         </div>
 
         {/* Hackathon Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featured.map((hackathon: any, index) => (
-            <HackathonCard 
-              key={hackathon._id || hackathon.id || index} 
-              hackathon={hackathon} 
-              index={index} 
-            />
-          ))}
-        </div>
+        {error ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {error}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featured.map((hackathon: any, index) => (
+              <HackathonCard 
+                key={hackathon._id || hackathon.id || index} 
+                hackathon={hackathon} 
+                index={index} 
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

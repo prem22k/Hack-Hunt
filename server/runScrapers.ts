@@ -10,51 +10,67 @@ if (result.error) {
   console.warn('Warning: .env file not found or failed to load:', result.error.message);
 }
 
-import mongoose from 'mongoose';
-import Hackathon from './models/Hackathon';
+import { db } from './firebaseAdmin';
 import { fetchMLHHackathons } from './services/mlhService';
 import { fetchKaggleCompetitions } from './services/kaggleService';
 import { scrapeDevpost } from './services/devpostService';
 import { NormalizedHackathon } from './types';
-import { connectDB } from './utils/db';
 
-// Debug credentials (don't log the actual key in production)
+// Debug credentials
 console.log('Kaggle Config Check:', {
     username: process.env.KAGGLE_USERNAME || 'MISSING',
     key: process.env.KAGGLE_KEY ? 'PRESENT' : 'MISSING'
 });
 
-const saveHackathons = async (hackathons: NormalizedHackathon[], source: string) => {
-  let savedCount = 0;
-  let updatedCount = 0;
+const saveToFirestore = async (hackathons: NormalizedHackathon[], source: string) => {
+  if (hackathons.length === 0) {
+    console.log(`No hackathons to save for ${source}.`);
+    return;
+  }
+
+  console.log(`Saving ${hackathons.length} hackathons from ${source} to Firestore...`);
   
-  console.log(`Processing ${hackathons.length} hackathons from ${source}...`);
+  const batchSize = 500; // Firestore batch limit
+  let batch = db.batch();
+  let count = 0;
+  let totalSaved = 0;
 
   for (const hack of hackathons) {
-    try {
-      const result = await Hackathon.updateOne(
-        { title: hack.title, startDate: hack.startDate, source: hack.source },
-        { ...hack, lastUpdated: new Date() },
-        { upsert: true }
-      );
-      
-      if (result.upsertedCount > 0) savedCount++;
-      else if (result.modifiedCount > 0) updatedCount++;
-      
-    } catch (error) {
-      console.error(`Error saving hackathon ${hack.title}:`, error);
+    // Create a unique ID: source-slugified_title
+    const slug = hack.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    const docId = `${source.toLowerCase()}-${slug}`;
+    const docRef = db.collection('hackathons').doc(docId);
+
+    batch.set(docRef, {
+      ...hack,
+      updatedAt: new Date()
+    }, { merge: true });
+
+    count++;
+
+    if (count >= batchSize) {
+      await batch.commit();
+      totalSaved += count;
+      console.log(`Committed batch of ${count} documents.`);
+      batch = db.batch();
+      count = 0;
     }
   }
-  console.log(`[${source}] New: ${savedCount}, Updated: ${updatedCount}, Total Fetched: ${hackathons.length}`);
-  return { savedCount, updatedCount };
+
+  if (count > 0) {
+    await batch.commit();
+    totalSaved += count;
+    console.log(`Committed final batch of ${count} documents.`);
+  }
+
+  console.log(`[${source}] Successfully saved ${totalSaved} documents.`);
 };
 
 const run = async () => {
   try {
-    await connectDB();
     console.log('Starting scraper job...');
 
-    // Get arguments from command line (skipping node and script path)
+    // Get arguments from command line
     const args = process.argv.slice(2);
     const runAll = args.length === 0;
     
@@ -71,12 +87,10 @@ const run = async () => {
         console.log('Fetching MLH...');
         try {
             const mlhData = await fetchMLHHackathons();
-            await saveHackathons(mlhData, 'MLH');
+            await saveToFirestore(mlhData, 'MLH');
         } catch (e) {
             console.error('Failed to fetch MLH:', e);
         }
-    } else {
-        console.log('Skipping MLH...');
     }
 
     // Kaggle
@@ -84,12 +98,10 @@ const run = async () => {
         console.log('Fetching Kaggle...');
         try {
             const kaggleData = await fetchKaggleCompetitions();
-            await saveHackathons(kaggleData, 'Kaggle');
+            await saveToFirestore(kaggleData, 'Kaggle');
         } catch (e) {
             console.error('Failed to fetch Kaggle:', e);
         }
-    } else {
-        console.log('Skipping Kaggle...');
     }
 
     // Devpost
@@ -97,18 +109,17 @@ const run = async () => {
         console.log('Scraping Devpost...');
         try {
             const devpostData = await scrapeDevpost();
-            await saveHackathons(devpostData, 'Devpost');
+            await saveToFirestore(devpostData, 'Devpost');
         } catch (e) {
             console.error('Failed to scrape Devpost:', e);
         }
-    } else {
-        console.log('Skipping Devpost...');
     }
 
-    console.log('All selected scrapers completed.');
+    console.log('Scraping job finished.');
     process.exit(0);
+
   } catch (error) {
-    console.error('Scraper job failed:', error);
+    console.error('Fatal error in scraper job:', error);
     process.exit(1);
   }
 };

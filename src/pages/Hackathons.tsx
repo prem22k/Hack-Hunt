@@ -11,6 +11,7 @@ import { Hackathon, skills } from "@/data/hackathons";
 const Hackathons = () => {
   const [hackathons, setHackathons] = useState<Hackathon[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedMode, setSelectedMode] = useState<string[]>([]);
@@ -20,11 +21,17 @@ const Hackathons = () => {
   useEffect(() => {
     const fetchHackathons = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/hackathons');
+        setError(null);
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const response = await fetch(`${API_URL}/api/hackathons`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
         setHackathons(data);
       } catch (error) {
         console.error('Error fetching hackathons:', error);
+        setError("Failed to connect to the server. Please ensure the backend is running on port 5000.");
       } finally {
         setLoading(false);
       }
@@ -175,6 +182,13 @@ const Hackathons = () => {
                   />
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-center">
+              <p>{error}</p>
             </div>
           )}
 

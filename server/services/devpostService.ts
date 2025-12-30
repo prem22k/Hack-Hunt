@@ -42,7 +42,23 @@ export const scrapeDevpost = async (): Promise<NormalizedHackathon[]> => {
           const location = locationElement?.textContent?.trim() || 'Online';
           const prize = prizeElement?.textContent?.trim() || '';
           const dateStr = dateElement?.textContent?.trim() || '';
-          const imageUrl = (imageElement as HTMLImageElement)?.src || ''; // Often background image, but let's try src
+          
+          // Image extraction: Try img src first, then background-image
+          let imageUrl = (imageElement as HTMLImageElement)?.src || '';
+          if (!imageUrl) {
+             const bgElement = tile.querySelector('.hackathon-tile-background');
+             if (bgElement) {
+                 const style = window.getComputedStyle(bgElement);
+                 const bgImage = style.backgroundImage; // url("...")
+                 if (bgImage && bgImage !== 'none') {
+                     imageUrl = bgImage.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
+                 }
+             }
+          }
+          // Fallback to a default Devpost image if needed, or keep empty
+          if (imageUrl.startsWith('//')) {
+              imageUrl = 'https:' + imageUrl;
+          }
 
           // Devpost dates are tricky "Feb 10 - 12, 2025" or "Feb 10 - Mar 1, 2025"
           // Placeholder dates for now as parsing is complex without a library
