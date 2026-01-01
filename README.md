@@ -1,120 +1,91 @@
-🚀 HackRadar
+# 🚀 HackHunt
 
-A smart way for students to discover hackathons
+**The Ultimate Hackathon Aggregator for Developers**
 
-📌 Overview
+HackHunt is a centralized platform that aggregates hackathons and coding competitions from multiple sources—**MLH, Devpost, Kaggle, and Devfolio**—into a single, unified interface. Stop searching across ten different tabs; find your next challenge in one place.
 
-HackRadar is a student-focused web platform that helps users discover upcoming hackathons from across the web in one place. Instead of manually searching multiple sites, students can browse, filter, and stay updated with hackathons that match their skills, interests, and preferences.
+![HackHunt Banner](https://images.unsplash.com/photo-1504384308090-c54be3855463?q=80&w=1200&auto=format&fit=crop)
 
-The goal of HackRadar is to save time, reduce information overload, and ensure students never miss opportunities to learn, build, and compete.
+## 🌟 Features
 
-🎯 Key Features
+*   **Unified Discovery**: Browse hackathons from MLH, Devpost, Kaggle, and Devfolio in a single list.
+*   **Smart Filtering**: Filter by **Mode** (Online/Offline), **Cost** (Free/Paid), **Skills** (Python, React, AI), and **Source**.
+*   **Automated Scraping**: Our backend automatically scrapes and updates hackathon data every 24 hours.
+*   **Rich Details**: View comprehensive details including prizes, dates, organizers, and registration links.
+*   **Responsive Design**: Built with a mobile-first approach using Tailwind CSS and Shadcn UI.
 
-🔍 Discover hackathons from multiple sources
+## 🛠️ Tech Stack
 
-🏷️ Filter by:
+### Frontend
+*   **Framework**: React 18 + TypeScript
+*   **Build Tool**: Vite
+*   **Styling**: Tailwind CSS + Shadcn UI
+*   **Deployment**: Vercel
 
-Skills (Web Development, AI/ML, UI/UX, etc.)
+### Backend
+*   **Runtime**: Node.js + Express
+*   **Database**: Google Firestore (NoSQL)
+*   **Scraping**: Playwright (Headless Browser) + Cheerio
+*   **Scheduling**: Node-Cron (Daily updates)
+*   **Deployment**: Render (Dockerized)
 
-Domain / Course
+## 🏗️ Architecture
 
-Free or Paid
+HackHunt uses a decoupled architecture. The **Node.js backend** runs scheduled jobs to scrape data from external platforms, normalizes it, and stores it in **Firestore**. The **React frontend** consumes this data via a REST API.
 
-Online or Offline
+## 🚀 Getting Started
 
-📅 View detailed hackathon information
+### Prerequisites
+*   Node.js (v18+)
+*   npm
+*   Firebase Service Account Credentials
 
-📧 Subscribe for email alerts based on preferences (UI ready)
+### Installation
 
-📱 Fully responsive design for mobile and desktop
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/prem22k/Hack-Hunt.git
+    cd Hack-Hunt
+    ```
 
-🧑‍🎓 Target Audience
+2.  **Backend Setup**
+    ```bash
+    cd server
+    npm install
+    
+    # Create a .env file
+    # PORT=5000
+    # FIREBASE_SERVICE_ACCOUNT='{...your json credentials...}'
+    
+    npm run dev
+    ```
 
-College students
+3.  **Frontend Setup**
+    ```bash
+    cd ..
+    npm install
+    npm run dev
+    ```
 
-Beginner & intermediate developers
+4.  **Visit the App**
+    Open `http://localhost:5173` to view the frontend.
 
-Hackathon enthusiasts
+## 🚢 Deployment
 
-Tech communities and clubs
+*   **Frontend**: Deployed on **Vercel**.
+*   **Backend**: Deployed on **Render** using Docker to support Playwright browsers.
+*   **Automation**: A cron job triggers the scraper daily to ensure fresh data.
 
-🛠️ Tech Stack
+## 🤝 Contributing
 
-Frontend: React + TypeScript
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-Build Tool: Vite
+1.  Fork the project
+2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
 
-Styling: Tailwind CSS
-
-UI Components: shadcn/ui
-
-State Management: React Hooks
-
-Data: Mock / Dummy JSON (frontend-only)
-
-📂 Project Structure
-src/
-├── components/     # Reusable UI components
-├── pages/          # Page-level components
-├── data/           # Dummy hackathon data
-├── styles/         # Global styles
-├── App.tsx         # Root component
-└── main.tsx        # Entry point
-
-🚀 Getting Started
-Prerequisites
-
-Node.js (v18 or later)
-
-npm
-
-Installation
-git clone <your-repo-url>
-cd hackradar
-npm install
-
-Run Locally
-npm run dev
-
-
-The app will be available at:
-
-http://localhost:5173
-
-🌱 Future Enhancements
-
-🔄 Auto-fetch hackathons from multiple platforms
-
-📨 Email notifications & reminders
-
-🔐 User authentication
-
-⭐ Save / bookmark hackathons
-
-📊 Personalized recommendations
-
-💡 Project Motivation
-
-As a student, finding relevant hackathons requires searching across multiple websites and platforms, which is time-consuming and inefficient. HackRadar was created to centralize hackathon discovery and make the process simple, fast, and personalized.
-
-🤝 Contributing
-
-Contributions are welcome!
-If you’d like to improve this project:
-
-Fork the repository
-
-Create a new branch
-
-Make your changes
-
-Submit a pull request
-
-📄 License
+## 📄 License
 
 This project is licensed under the MIT License.
-
-📬 Contact
-
-Created with ❤️ by a student, for students.
-Feel free to reach out for collaboration or feedback.
