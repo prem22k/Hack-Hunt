@@ -62,7 +62,7 @@ const AIRecommendations = () => {
           </div>
           <h2 className="text-2xl md:text-3xl font-bold mb-3">Find Your Perfect Hackathon Match</h2>
           <p className="text-muted-foreground">
-            Enter your skills and let our Gemini AI analyze hundreds of events to find the ones where you'll shine.
+            Enter your skills and let our AI analyze hundreds of events to find the ones where you'll shine.
           </p>
         </div>
 

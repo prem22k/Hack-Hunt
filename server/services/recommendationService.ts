@@ -51,45 +51,54 @@ export const getRecommendedHackathons = async (
     ]
   `;
 
-  try {
-    const groq = new Groq({ apiKey });
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.1,
-      response_format: { type: "json_object" },
-    });
+  const makeRequest = async (retries = 3, delay = 1000): Promise<HackathonRecommendation[]> => {
+    try {
+      const groq = new Groq({ apiKey });
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.1,
+        response_format: { type: "json_object" },
+      });
 
-    const content = completion.choices[0]?.message?.content || "[]";
-    // Clean up potential markdown code blocks if present (though json_object mode should avoid this)
-    const cleanContent = content.replace(/\`\`\`json\n?|\n?\`\`\`/g, "").trim();
-    
-    const recommendations: HackathonRecommendation[] = JSON.parse(cleanContent);
-    // Ensure the response is an array (sometimes models return an object with a key like "recommendations")
-    if (!Array.isArray(recommendations)) {
-       // @ts-ignore
-       if (recommendations.recommendations && Array.isArray(recommendations.recommendations)) {
+      const content = completion.choices[0]?.message?.content || "[]";
+      // Clean up potential markdown code blocks if present (though json_object mode should avoid this)
+      const cleanContent = content.replace(/```json\n?|\n?```/g, "").trim();
+      
+      const recommendations: HackathonRecommendation[] = JSON.parse(cleanContent);
+      // Ensure the response is an array (sometimes models return an object with a key like "recommendations")
+      if (!Array.isArray(recommendations)) {
          // @ts-ignore
-         return recommendations.recommendations;
-       }
-       // If it's a single object, wrap it in an array
-       if (typeof recommendations === 'object' && recommendations !== null) {
-          // Check if it looks like a recommendation object
-          // @ts-ignore
-          if (recommendations.hackathonTitle) {
-             return [recommendations as unknown as HackathonRecommendation];
-          }
-       }
-       return [];
+         if (recommendations.recommendations && Array.isArray(recommendations.recommendations)) {
+           // @ts-ignore
+           return recommendations.recommendations;
+         }
+         // If it's a single object, wrap it in an array
+         if (typeof recommendations === 'object' && recommendations !== null) {
+            // Check if it looks like a recommendation object
+            // @ts-ignore
+            if (recommendations.hackathonTitle) {
+               return [recommendations as unknown as HackathonRecommendation];
+            }
+         }
+         return [];
+      }
+      return recommendations;
+    } catch (error: any) {
+      if (error?.status === 429 && retries > 0) {
+        console.warn(`Groq rate limit exceeded. Retrying in ${delay}ms... (${retries} retries left)`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return makeRequest(retries - 1, delay * 2);
+      }
+      console.error("Error generating recommendations with Groq:", error);
+      return [];
     }
-    return recommendations;
-  } catch (error) {
-    console.error("Error generating recommendations with Groq:", error);
-    return [];
-  }
+  };
+
+  return makeRequest();
 };
