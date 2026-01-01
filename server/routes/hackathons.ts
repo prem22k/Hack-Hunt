@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import { db } from '../firebaseAdmin';
 import { runAllScrapers } from '../cron/scheduler';
+import { getRecommendedHackathons } from '../services/recommendationService';
+import { NormalizedHackathon } from '../types';
 
 const router = express.Router();
 
@@ -12,6 +14,29 @@ router.post('/scrape', async (req: Request, res: Response) => {
     runAllScrapers().catch(err => console.error('Manual scrape failed:', err));
     res.json({ message: 'Scraping started in background. Check server logs for progress.' });
   } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Get AI Recommendations
+router.post('/recommend', async (req: Request, res: Response) => {
+  try {
+    const { userSkills } = req.body;
+
+    if (!userSkills || !Array.isArray(userSkills) || userSkills.length === 0) {
+      res.status(400).json({ message: 'Invalid userSkills. Must be a non-empty array of strings.' });
+      return;
+    }
+
+    // Fetch all hackathons to analyze
+    // In a production app, you might want to filter this first (e.g. only upcoming)
+    const snapshot = await db.collection('hackathons').get();
+    const hackathons = snapshot.docs.map(doc => doc.data() as NormalizedHackathon);
+
+    const recommendations = await getRecommendedHackathons(userSkills, hackathons);
+    res.json(recommendations);
+  } catch (err: any) {
+    console.error('Error getting recommendations:', err);
     res.status(500).json({ message: err.message });
   }
 });

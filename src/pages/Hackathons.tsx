@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/SearchBar";
 import FilterPills from "@/components/FilterPills";
 import HackathonCard from "@/components/HackathonCard";
+import AIRecommendations from "@/components/AIRecommendations";
 import { Button } from "@/components/ui/button";
 import { Hackathon, skills } from "@/data/hackathons";
 
@@ -94,6 +95,8 @@ const Hackathons = () => {
         <Navbar />
 
         <main className="container mx-auto px-4 py-8">
+          <AIRecommendations />
+          
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
