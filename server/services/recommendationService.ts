@@ -41,14 +41,16 @@ export const getRecommendedHackathons = async (
     3. Rank them from best match (1) to lowest match (3).
     4. Provide a "matchScore" (0-100) and a specific "reason" explaining the connection between the user's skills and the hackathon's theme or requirements.
 
-    Return ONLY a valid JSON array with this structure:
-    [
-      {
-        "hackathonTitle": "Exact Title From List",
-        "matchScore": 95,
-        "reason": "This hackathon focuses on AI/ML, which aligns perfectly with your Python and TensorFlow skills."
-      }
-    ]
+    Return ONLY a valid JSON object with a "recommendations" key containing an array:
+    {
+      "recommendations": [
+        {
+          "hackathonTitle": "Exact Title From List",
+          "matchScore": 95,
+          "reason": "This hackathon focuses on AI/ML, which aligns perfectly with your Python and TensorFlow skills."
+        }
+      ]
+    }
   `;
 
   const makeRequest = async (retries = 3, delay = 1000): Promise<HackathonRecommendation[]> => {
@@ -56,6 +58,10 @@ export const getRecommendedHackathons = async (
       const groq = new Groq({ apiKey });
       const completion = await groq.chat.completions.create({
         messages: [
+          {
+            role: "system",
+            content: "You are a helpful assistant that outputs JSON."
+          },
           {
             role: "user",
             content: prompt,
@@ -66,28 +72,30 @@ export const getRecommendedHackathons = async (
         response_format: { type: "json_object" },
       });
 
-      const content = completion.choices[0]?.message?.content || "[]";
-      // Clean up potential markdown code blocks if present (though json_object mode should avoid this)
+      const content = completion.choices[0]?.message?.content || "{}";
+      // Clean up potential markdown code blocks if present
       const cleanContent = content.replace(/```json\n?|\n?```/g, "").trim();
       
-      const recommendations: HackathonRecommendation[] = JSON.parse(cleanContent);
-      // Ensure the response is an array (sometimes models return an object with a key like "recommendations")
-      if (!Array.isArray(recommendations)) {
-         // @ts-ignore
-         if (recommendations.recommendations && Array.isArray(recommendations.recommendations)) {
-           // @ts-ignore
-           return recommendations.recommendations;
-         }
-         // If it's a single object, wrap it in an array
-         if (typeof recommendations === 'object' && recommendations !== null) {
-            // Check if it looks like a recommendation object
-            // @ts-ignore
-            if (recommendations.hackathonTitle) {
-               return [recommendations as unknown as HackathonRecommendation];
-            }
-         }
-         return [];
+      console.log("Groq Raw Response:", cleanContent.substring(0, 200) + "..."); // Log start of response for debugging
+
+      let parsed: any;
+      try {
+        parsed = JSON.parse(cleanContent);
+      } catch (e) {
+        console.error("Failed to parse Groq JSON:", e);
+        return [];
       }
+
+      let recommendations: HackathonRecommendation[] = [];
+
+      if (parsed.recommendations && Array.isArray(parsed.recommendations)) {
+        recommendations = parsed.recommendations;
+      } else if (Array.isArray(parsed)) {
+        recommendations = parsed;
+      } else if (typeof parsed === 'object' && parsed.hackathonTitle) {
+        recommendations = [parsed];
+      }
+
       return recommendations;
     } catch (error: any) {
       if (error?.status === 429 && retries > 0) {
