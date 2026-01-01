@@ -13,9 +13,11 @@ export const getRecommendedHackathons = async (
   hackathons: NormalizedHackathon[]
 ): Promise<HackathonRecommendation[]> => {
   const apiKey = process.env.GROQ_API_KEY;
+  
+  // If no API key, use fallback immediately
   if (!apiKey) {
-    console.error("GROQ_API_KEY is not set");
-    return [];
+    console.warn("GROQ_API_KEY is not set, using local fallback.");
+    return getFallbackRecommendations(userSkills, hackathons);
   }
   
   // Prepare the data for the prompt
@@ -83,7 +85,7 @@ export const getRecommendedHackathons = async (
         parsed = JSON.parse(cleanContent);
       } catch (e) {
         console.error("Failed to parse Groq JSON:", e);
-        return [];
+        return getFallbackRecommendations(userSkills, hackathons);
       }
 
       let recommendations: HackathonRecommendation[] = [];
@@ -96,17 +98,74 @@ export const getRecommendedHackathons = async (
         recommendations = [parsed];
       }
 
+      if (recommendations.length === 0) {
+         return getFallbackRecommendations(userSkills, hackathons);
+      }
+
       return recommendations;
     } catch (error: any) {
-      if (error?.status === 429 && retries > 0) {
+      // If rate limited and we have retries left, wait and retry
+      // BUT if the error message indicates daily quota exceeded (TPD), retrying won't help.
+      // The error message for TPD usually contains "tokens per day (TPD)".
+      const isDailyLimit = error?.error?.message?.includes("tokens per day (TPD)");
+      
+      if (error?.status === 429 && retries > 0 && !isDailyLimit) {
         console.warn(`Groq rate limit exceeded. Retrying in ${delay}ms... (${retries} retries left)`);
         await new Promise(resolve => setTimeout(resolve, delay));
         return makeRequest(retries - 1, delay * 2);
       }
-      console.error("Error generating recommendations with Groq:", error);
-      return [];
+      
+      console.error("Error generating recommendations with Groq (switching to fallback):", error);
+      return getFallbackRecommendations(userSkills, hackathons);
     }
   };
 
   return makeRequest();
+};
+
+const getFallbackRecommendations = (
+  userSkills: string[],
+  hackathons: NormalizedHackathon[]
+): HackathonRecommendation[] => {
+  console.log("Using local fallback algorithm for recommendations...");
+  const normalizedUserSkills = userSkills.map(s => s.toLowerCase().trim());
+
+  const scoredHackathons = hackathons.map(hackathon => {
+    let matchCount = 0;
+    const matchedSkills: string[] = [];
+
+    // Check skill matches
+    hackathon.skills.forEach(skill => {
+      if (normalizedUserSkills.some(us => skill.toLowerCase().includes(us) || us.includes(skill.toLowerCase()))) {
+        matchCount++;
+        matchedSkills.push(skill);
+      }
+    });
+
+    // Simple scoring: 20 points per skill match, max 95
+    let score = Math.min(matchCount * 20 + 10, 95);
+    
+    // Boost for title matches
+    if (normalizedUserSkills.some(us => hackathon.title.toLowerCase().includes(us))) {
+      score += 15;
+    }
+
+    return {
+      hackathon,
+      score: Math.min(score, 99),
+      matchedSkills
+    };
+  });
+
+  // Sort by score descending
+  scoredHackathons.sort((a, b) => b.score - a.score);
+
+  // Take top 3
+  return scoredHackathons.slice(0, 3).map(item => ({
+    hackathonTitle: item.hackathon.title,
+    matchScore: item.score,
+    reason: item.matchedSkills.length > 0 
+      ? `Matches your skills: ${item.matchedSkills.join(", ")}`
+      : "Recommended based on general popularity and availability."
+  }));
 };
