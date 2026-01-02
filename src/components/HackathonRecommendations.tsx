@@ -29,7 +29,8 @@ export function HackathonRecommendations({ userId, userSkills = ["React", "TypeS
         try {
             const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`);
             const data = await response.json();
-            const city = data.city || data.locality;
+            // Try multiple fields as the API response varies by region
+            const city = data.city || data.locality || data.principalSubdivision || data.countryName;
             if (city) setLocation(city);
         } catch (e) {
             console.log("Could not fetch city name");
@@ -76,9 +77,16 @@ export function HackathonRecommendations({ userId, userSkills = ["React", "TypeS
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">AI Recommendations</h2>
-            <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
-                <Filter className="w-4 h-4 mr-2" /> Filters
-            </Button>
+            <div className="flex items-center gap-2">
+                {location && !showFilters && (
+                    <span className="text-sm text-muted-foreground flex items-center bg-muted px-3 py-1 rounded-full border">
+                        <MapPin className="w-3 h-3 mr-1" /> {location}
+                    </span>
+                )}
+                <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
+                    <Filter className="w-4 h-4 mr-2" /> {showFilters ? "Hide Filters" : "Filters"}
+                </Button>
+            </div>
         </div>
 
         {showFilters && (
