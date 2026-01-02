@@ -7,7 +7,7 @@ import { NormalizedHackathon } from '../types';
 const router = express.Router();
 
 // Trigger Scrapers Manually
-router.post('/scrape', async (req: Request, res: Response) => {
+router.all('/scrape', async (req: Request, res: Response) => {
   try {
     console.log('Manual scrape triggered via API');
     // Run in background to avoid timeout
