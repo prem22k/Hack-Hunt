@@ -21,7 +21,7 @@ router.all('/scrape', async (req: Request, res: Response) => {
 // Get AI Recommendations
 router.post('/recommend', async (req: Request, res: Response) => {
   try {
-    const { userSkills } = req.body;
+    const { userSkills, userLocation, filters } = req.body;
 
     if (!userSkills || !Array.isArray(userSkills) || userSkills.length === 0) {
       res.status(400).json({ message: 'Invalid userSkills. Must be a non-empty array of strings.' });
@@ -29,11 +29,25 @@ router.post('/recommend', async (req: Request, res: Response) => {
     }
 
     // Fetch all hackathons to analyze
-    // In a production app, you might want to filter this first (e.g. only upcoming)
     const snapshot = await db.collection('hackathons').get();
-    const hackathons = snapshot.docs.map(doc => doc.data() as NormalizedHackathon);
+    let hackathons = snapshot.docs.map(doc => doc.data() as NormalizedHackathon);
 
-    const recommendations = await getRecommendedHackathons(userSkills, hackathons);
+    // Apply User Filters (Pre-AI)
+    if (filters) {
+      if (filters.mode) {
+        hackathons = hackathons.filter(h => h.mode && h.mode.toLowerCase() === filters.mode.toLowerCase());
+      }
+      if (filters.isPaid !== undefined) {
+        hackathons = hackathons.filter(h => h.isPaid === filters.isPaid);
+      }
+      if (filters.location) {
+        const filterLoc = filters.location.toLowerCase();
+        hackathons = hackathons.filter(h => h.location && h.location.toLowerCase().includes(filterLoc));
+      }
+      // Add more filters as needed
+    }
+
+    const recommendations = await getRecommendedHackathons(userSkills, hackathons, userLocation);
     res.json(recommendations);
   } catch (err: any) {
     console.error('Error getting recommendations:', err);
