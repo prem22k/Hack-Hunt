@@ -12,8 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MapPin, Filter } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 export function HackathonRecommendations({ userId, userSkills = ["React", "TypeScript", "Node.js"] }: { userId: string, userSkills?: string[] }) {
+  const { toast } = useToast();
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   
@@ -24,6 +26,7 @@ export function HackathonRecommendations({ userId, userSkills = ["React", "TypeS
   const [showFilters, setShowFilters] = useState(false);
 
   const detectLocation = () => {
+    setLoading(true);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(async (position) => {
         try {
@@ -34,10 +37,31 @@ export function HackathonRecommendations({ userId, userSkills = ["React", "TypeS
             if (city) setLocation(city);
         } catch (e) {
             console.log("Could not fetch city name");
+        } finally {
+            setLoading(false);
         }
       }, (error) => {
         console.error("Error getting location", error);
+        
+        // 1. Catch Permission Denied Error
+        if (error.code === error.PERMISSION_DENIED) {
+            // 2. Show Toast Notification
+            toast({
+                title: "Location access denied",
+                description: "Showing global events instead.",
+                variant: "default",
+            });
+            
+            // 3. Set filter to Online automatically
+            setMode("online");
+            setLocation("");
+        }
+        
+        // 4. Stop loading spinner
+        setLoading(false);
       });
+    } else {
+        setLoading(false);
     }
   };
 

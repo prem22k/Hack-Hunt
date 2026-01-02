@@ -7,21 +7,35 @@ import { Hackathon } from "@/data/hackathons";
 
 const FeaturedHackathons = () => {
   const [featured, setFeatured] = useState<Hackathon[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHackathons = async () => {
       try {
+        setLoading(true);
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const response = await fetch(`${API_URL}/api/hackathons`);
+        
         if (!response.ok) {
            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
         const data = await response.json();
-        setFeatured(data.slice(0, 4));
+        
+        // Sort by start date (upcoming first) and take top 4
+        const sorted = data
+          .filter((h: any) => new Date(h.startDate) > new Date())
+          .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+          .slice(0, 4);
+          
+        // Fallback to any 4 if no upcoming events found
+        setFeatured(sorted.length > 0 ? sorted : data.slice(0, 4)); 
       } catch (error) {
         console.error('Error fetching hackathons:', error);
         setError("Failed to load featured hackathons.");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -48,14 +62,20 @@ const FeaturedHackathons = () => {
           <Link to="/hackathons" className="mt-4 md:mt-0">
             <Button variant="outline" className="group">
               View All
-              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
             </Button>
           </Link>
         </div>
 
         {/* Hackathon Grid */}
-        {error ? (
-          <div className="text-center py-8 text-muted-foreground">
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-[350px] rounded-2xl bg-muted/50 animate-pulse" />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-8 text-muted-foreground bg-destructive/5 rounded-xl border border-destructive/10">
             {error}
           </div>
         ) : (
