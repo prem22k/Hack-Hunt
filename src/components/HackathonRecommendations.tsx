@@ -48,7 +48,8 @@ export function HackathonRecommendations({ userId, userSkills = ["React", "TypeS
       if (isPaid) filters.isPaid = true;
       if (location) filters.location = location;
 
-      const res = await fetch('http://localhost:5000/api/hackathons/recommend', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiUrl}/api/hackathons/recommend`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
