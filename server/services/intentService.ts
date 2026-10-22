@@ -1,8 +1,13 @@
 import Groq from "groq-sdk";
 
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY
-});
+// Created lazily: constructing Groq without a key throws at import time and took the
+// whole API down; without a key smart search just falls back to no parsed intent.
+let groq: Groq | null = null;
+const getGroq = () => {
+    if (!process.env.GROQ_API_KEY) return null;
+    groq ??= new Groq({ apiKey: process.env.GROQ_API_KEY });
+    return groq;
+};
 
 export interface SearchIntent {
     location?: string;
@@ -13,8 +18,13 @@ export interface SearchIntent {
 }
 
 export const parseUserIntent = async (query: string): Promise<SearchIntent> => {
+    const client = getGroq();
+    if (!client) {
+        console.warn("GROQ_API_KEY is not set; skipping intent parsing.");
+        return {};
+    }
     try {
-        const completion = await groq.chat.completions.create({
+        const completion = await client.chat.completions.create({
             messages: [
                 {
                     role: "system",
