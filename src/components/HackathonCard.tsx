@@ -78,10 +78,11 @@ const HackathonCard = ({ hackathon, index = 0 }: HackathonCardProps) => {
           <Badge
             variant="secondary"
             className={cn(
-              "text-xs font-medium",
-              mode === "online" && "bg-success/20 text-success",
-              mode === "offline" && "bg-info/20 text-info",
-              mode === "hybrid" && "bg-warning/20 text-warning"
+              // Solid card backing: the tinted /20 fills alone vanish over busy cover images
+              "text-xs font-medium bg-card/95 backdrop-blur-sm shadow-sm",
+              mode === "online" && "text-success",
+              mode === "offline" && "text-info",
+              mode === "hybrid" && "text-warning"
             )}
           >
             {mode.charAt(0).toUpperCase() + mode.slice(1)}

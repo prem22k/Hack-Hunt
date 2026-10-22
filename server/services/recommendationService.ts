@@ -105,7 +105,11 @@ export const getRecommendedHackathons = async (
             content: prompt,
           },
         ],
-        model: "llama-3.3-70b-versatile",
+        // Groq retired llama-3.3-70b-versatile (404 model_not_found).
+        // gpt-oss-120b supports JSON mode and is the new default; override
+        // with GROQ_MODEL. gpt-oss spends tokens on reasoning first, so never
+        // cap max_tokens / max_completion_tokens below 2048 for these calls.
+        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
         temperature: 0.1,
         response_format: { type: "json_object" },
       });

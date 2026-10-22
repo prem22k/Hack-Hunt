@@ -42,8 +42,8 @@ graph TD
 *   **Language**: TypeScript
 *   **Database**: Google Firestore (via `firebase-admin`)
 *   **Scraping Engine**: 
-    *   **Playwright**: For dynamic, JavaScript-heavy sites (Devpost, Devfolio).
-    *   **Axios/Cheerio**: For static HTML parsing and API consumption (MLH, Kaggle).
+    *   **Playwright**: For dynamic, JavaScript-heavy sites (MLH, Devfolio).
+    *   **Axios/Cheerio**: For static HTML parsing and API consumption (MLH, Kaggle, Devpost's public JSON endpoint).
 *   **Scheduling**: `node-cron` for internal job scheduling.
 *   **Deployment**: Render (Docker Container).
 
@@ -58,7 +58,7 @@ Each source has a dedicated service module implementing a standardized `Normaliz
 | :--- | :--- | :--- |
 | **MLH** | API/Static | Direct HTTP requests to MLH public endpoints. |
 | **Kaggle** | API | Consumes Kaggle's public API for competitions. |
-| **Devpost** | Playwright | Headless browser automation to handle infinite scroll and dynamic DOM. |
+| **Devpost** | JSON API | Reads Devpost's public `devpost.com/api/hackathons` endpoint with Axios (pages 1–3, `status[]=upcoming&status[]=open`); no headless browser needed. |
 | **Devfolio** | Playwright | Headless browser automation to bypass client-side rendering. |
 
 ### 4.2 Data Normalization
@@ -129,9 +129,22 @@ The backend is containerized to ensure a consistent environment for Playwright, 
     ```bash
     cd server
     npm install
-    # Create .env file with FIREBASE_SERVICE_ACCOUNT and KAGGLE credentials
+    # Create .env file with the credentials from the table below
     npm run dev
     ```
+
+    #### 7.1 Environment Variables (`.env`)
+
+    | Variable | Required | Default | Description |
+    | :--- | :--- | :--- | :--- |
+    | `PORT` | No | `5000` | Port the Express server binds to. |
+    | `FIREBASE_SERVICE_ACCOUNT` | Yes (prod) | – | Serialized Firebase service-account JSON; falls back to `server/service-account.json` locally. |
+    | `KAGGLE_USERNAME` / `KAGGLE_KEY` | No | – | Kaggle API credentials (falls back to `kaggle.json`). Without them the Kaggle scraper is skipped. |
+    | `GROQ_API_KEY` | No | – | Groq API key. Enables smart-search intent parsing and AI recommendations; without it smart search falls back to unparsed queries and recommendations returns an empty list. |
+    | `GROQ_MODEL` | No | `openai/gpt-oss-120b` | Groq model powering AI recommendations. |
+    | `GROQ_INTENT_MODEL` | No | `openai/gpt-oss-20b` | Groq model powering smart-search intent parsing. |
+
+    > Both Groq overrides are `text` models that support `response_format: { type: "json_object" }`. The gpt-oss models spend tokens on reasoning before answering, so any `max_tokens` / `max_completion_tokens` set for these requests must be ≥ 2048 to avoid truncating the JSON response.
 
 3.  **Frontend Setup**:
     ```bash

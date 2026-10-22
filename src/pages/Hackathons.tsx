@@ -45,28 +45,34 @@ const Hackathons = () => {
   const types = ["free", "paid"];
 
   const filteredHackathons = useMemo(() => {
+    const query = search.toLowerCase();
     return hackathons.filter((h) => {
+      // API documents use title/isPaid; normalise the same way HackathonCard does
+      const raw = h as Hackathon & { title?: string; isPaid?: boolean };
+      const name = (raw.name || raw.title || "").toLowerCase();
+      const organizer = (raw.organizer || "").toLowerCase();
+      const skills = (raw.skills || []).map((s) => s.toLowerCase());
+      const type = raw.type || (raw.isPaid ? "paid" : "free");
+
       const matchesSearch =
-        search === "" ||
-        h.name.toLowerCase().includes(search.toLowerCase()) ||
-        h.organizer.toLowerCase().includes(search.toLowerCase()) ||
-        h.skills.some((s) => s.toLowerCase().includes(search.toLowerCase()));
+        query === "" ||
+        name.includes(query) ||
+        organizer.includes(query) ||
+        skills.some((s) => s.includes(query));
 
       const matchesSkills =
         selectedSkills.length === 0 ||
-        selectedSkills.some((skill) =>
-          h.skills.map((s) => s.toLowerCase()).includes(skill.toLowerCase())
-        );
+        selectedSkills.some((skill) => skills.includes(skill.toLowerCase()));
 
       const matchesMode =
         selectedMode.length === 0 || selectedMode.includes(h.mode);
 
       const matchesType =
-        selectedType.length === 0 || selectedType.includes(h.type);
+        selectedType.length === 0 || selectedType.includes(type);
 
       return matchesSearch && matchesSkills && matchesMode && matchesType;
     });
-  }, [search, selectedSkills, selectedMode, selectedType]);
+  }, [hackathons, search, selectedSkills, selectedMode, selectedType]);
 
   const clearFilters = () => {
     setSelectedSkills([]);

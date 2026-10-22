@@ -1,20 +1,31 @@
 import Groq from "groq-sdk";
 
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY
-});
+// Created lazily: constructing Groq without a key throws at import time and took the
+// whole API down; without a key smart search just falls back to no parsed intent.
+let groq: Groq | null = null;
+const getGroq = () => {
+    if (!process.env.GROQ_API_KEY) return null;
+    groq ??= new Groq({ apiKey: process.env.GROQ_API_KEY });
+    return groq;
+};
 
 export interface SearchIntent {
     location?: string;
     skills?: string[];
     isOnline?: boolean;
     isPaid?: boolean;
+    hasPrize?: boolean;
     includeOnline?: boolean;
 }
 
 export const parseUserIntent = async (query: string): Promise<SearchIntent> => {
+    const client = getGroq();
+    if (!client) {
+        console.warn("GROQ_API_KEY is not set; skipping intent parsing.");
+        return {};
+    }
     try {
-        const completion = await groq.chat.completions.create({
+        const completion = await client.chat.completions.create({
             messages: [
                 {
                     role: "system",
@@ -24,10 +35,13 @@ export const parseUserIntent = async (query: string): Promise<SearchIntent> => {
                     - skills (array of strings)
                     - isOnline (boolean or null)
                     - isPaid (boolean or null)
+                    - hasPrize (boolean or null)
                     
                     If the user mentions a specific country or city, set 'location'.
                     If they mention 'remote' or 'online', set 'isOnline' to true.
-                    If they mention 'paid' or 'prizes', set 'isPaid' to true.
+                    If they say 'free', set 'isPaid' to false.
+                    Set 'isPaid' to true ONLY when they explicitly ask for a paid/ticketed event or mention an entry fee or ticket price. Never set 'isPaid' for prize, cash, award or reward wording.
+                    If they mention prizes, cash, awards or rewards, set 'hasPrize' to true.
                     `
                 },
                 {
@@ -35,7 +49,9 @@ export const parseUserIntent = async (query: string): Promise<SearchIntent> => {
                     content: query
                 }
             ],
-            model: "llama3-8b-8192",
+            // Groq retired llama3-8b-8192 (404 model_not_found). gpt-oss-20b
+            // supports JSON mode and is the new default; overridable via env.
+            model: process.env.GROQ_INTENT_MODEL || "openai/gpt-oss-20b",
             temperature: 0,
             response_format: { type: "json_object" }
         });
