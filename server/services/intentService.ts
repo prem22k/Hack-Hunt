@@ -14,6 +14,7 @@ export interface SearchIntent {
     skills?: string[];
     isOnline?: boolean;
     isPaid?: boolean;
+    hasPrize?: boolean;
     includeOnline?: boolean;
 }
 
@@ -34,10 +35,13 @@ export const parseUserIntent = async (query: string): Promise<SearchIntent> => {
                     - skills (array of strings)
                     - isOnline (boolean or null)
                     - isPaid (boolean or null)
+                    - hasPrize (boolean or null)
                     
                     If the user mentions a specific country or city, set 'location'.
                     If they mention 'remote' or 'online', set 'isOnline' to true.
-                    If they mention 'paid' or 'prizes', set 'isPaid' to true.
+                    If they say 'free', set 'isPaid' to false.
+                    Set 'isPaid' to true ONLY when they explicitly ask for a paid/ticketed event or mention an entry fee or ticket price. Never set 'isPaid' for prize, cash, award or reward wording.
+                    If they mention prizes, cash, awards or rewards, set 'hasPrize' to true.
                     `
                 },
                 {

@@ -1,6 +1,7 @@
 import express from 'express';
 import { db } from '../firebaseAdmin';
 import { parseUserIntent } from '../services/intentService';
+import { hasPrizeValue, matchesSearchTerm } from '../utils/searchMatch';
 
 const router = express.Router();
 
@@ -48,11 +49,12 @@ router.post('/smart', async (req, res) => {
             }
 
             // 2. Skills Logic
+            // Case-insensitive token match across skills, title and description.
+            // Sources like MLH have no skills, so the title/description fallback
+            // is what lets "AI" match an MLH event named "AI for Good".
             let skillMatch = true;
             if (intent.skills && intent.skills.length > 0) {
-                const hSkills = (h.skills || []).map((s: string) => s.toLowerCase());
-                // Check if hackathon has ANY of the requested skills
-                skillMatch = intent.skills.some(s => hSkills.includes(s.toLowerCase()));
+                skillMatch = intent.skills.some(s => matchesSearchTerm(s, h));
             }
 
             // 3. Paid/Free Logic
@@ -66,12 +68,22 @@ router.post('/smart', async (req, res) => {
                 }
             }
 
-            return locationMatch && skillMatch && paidMatch;
+            // 4. Prize Logic
+            // "With prizes" is not the same as "paid entry": isPaid means the
+            // event charges a fee, so only hasPrize filters on an actual prize value.
+            let prizeMatch = true;
+            if (intent.hasPrize === true) {
+                prizeMatch = hasPrizeValue(h.prize);
+            }
+
+            return locationMatch && skillMatch && paidMatch && prizeMatch;
         });
+
+        const count = filtered.length;
 
         res.json({
             intent,
-            count: filtered.length,
+            count,
             results: filtered
         });
 
