@@ -45,7 +45,7 @@ const Index = () => {
         <footer className="py-8 border-t border-border bg-card">
           <div className="container mx-auto px-4 text-center">
             <p className="text-muted-foreground text-sm">
-              © 2025 HackHunt. Built for builders.
+              © {new Date().getFullYear()} HackHunt. Built for builders.
             </p>
           </div>
         </footer>

@@ -18,7 +18,9 @@ export function HackathonRecommendations({ userId, userSkills = ["React", "TypeS
   const { toast } = useToast();
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  
+  // Only show "no results" after an actual search, not on first paint
+  const [hasSearched, setHasSearched] = useState(false);
+
   // Filter States
   const [location, setLocation] = useState<string>("");
   const [mode, setMode] = useState<string>("all");
@@ -84,11 +86,13 @@ export function HackathonRecommendations({ userId, userSkills = ["React", "TypeS
         })
       });
       const data = await res.json();
-      setRecommendations(data);
+      // Error responses come back as { message }, which would break .map below
+      setRecommendations(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+      setHasSearched(true);
     }
   };
 
@@ -174,7 +178,9 @@ export function HackathonRecommendations({ userId, userSkills = ["React", "TypeS
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {recommendations.length === 0 && !loading && (
             <div className="col-span-3 text-center py-8 text-muted-foreground">
-                No recommendations found. Try adjusting your filters.
+                {hasSearched
+                  ? "No recommendations found. Try adjusting your filters."
+                  : "Hit Get Matches to see hackathons ranked for your skills and location."}
             </div>
         )}
         {recommendations.map((rec: any, idx) => (
