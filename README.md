@@ -56,6 +56,9 @@ HackHunt uses a decoupled architecture. The **Node.js backend** runs scheduled j
     # Create a .env file
     # PORT=5000
     # FIREBASE_SERVICE_ACCOUNT='{...your json credentials...}'
+    # GROQ_API_KEY='gsk_...' (enables smart search + AI recommendations)
+    # GROQ_MODEL (optional) — recommendations model, default: openai/gpt-oss-120b
+    # GROQ_INTENT_MODEL (optional) — smart search intent parser model, default: openai/gpt-oss-20b
     
     npm run dev
     ```

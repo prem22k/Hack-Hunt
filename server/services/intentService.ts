@@ -45,7 +45,9 @@ export const parseUserIntent = async (query: string): Promise<SearchIntent> => {
                     content: query
                 }
             ],
-            model: "llama3-8b-8192",
+            // Groq retired llama3-8b-8192 (404 model_not_found). gpt-oss-20b
+            // supports JSON mode and is the new default; overridable via env.
+            model: process.env.GROQ_INTENT_MODEL || "openai/gpt-oss-20b",
             temperature: 0,
             response_format: { type: "json_object" }
         });
